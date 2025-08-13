@@ -1,0 +1,100 @@
+<script>
+let username = "";
+let imgFiles = [
+  "bus.png",
+  "pic1.png",
+  "pic2.png",
+  "pic4.png",
+  "pic5.png",
+  "pic6.png",
+  "pic7.png",
+  "pic8.png",
+  "pic9.png",
+  "pic10.png"
+]; // Added all new pics
+let currentImgIndex = 0;
+let img = new Image();
+let sections = [];
+const totalSections = 8;
+const canvas = document.getElementById("picCanvas");
+const ctx = canvas.getContext("2d");
+let imageLoaded = false;
+
+function loadImage(index) {
+  img.src = imgFiles[index];
+  img.onload = function() {
+    imageLoaded = true;
+    canvas.width = img.width;
+    canvas.height = img.height;
+    setupSections();
+  };
+}
+
+document.getElementById("username-screen").style.display = "block";
+
+function setUsername() {
+  const nameInput = document.getElementById("username-input").value.trim();
+  if (nameInput.length === 0) return;
+  username = nameInput;
+
+  document.getElementById("username-screen").style.display = "none";
+  document.getElementById("typing-screen").style.display = "block";
+  currentImgIndex = 0;
+  loadImage(currentImgIndex);
+  document.getElementById("progress").textContent = `Progress: 0%`;
+}
+
+document.getElementById("type-input").addEventListener("input", function() {
+  const typed = document.getElementById("type-input").value.trim();
+  if (typed.toLowerCase() === username.toLowerCase() && sections.length > 0) {
+    revealSection();
+    let percent = Math.floor(((totalSections - sections.length) / totalSections) * 100);
+    document.getElementById("progress").textContent = `Progress: ${percent}%`;
+    document.getElementById("type-input").value = "";
+    if (sections.length === 0) {
+      if (currentImgIndex < imgFiles.length - 1) {
+        currentImgIndex++;
+        loadImage(currentImgIndex);
+        document.getElementById("progress").textContent = `Next picture! Progress: 0%`;
+      } else {
+        document.getElementById("progress").textContent = "🎉 You revealed all pictures!";
+      }
+    }
+  }
+});
+
+function setupSections() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  sections = [];
+  const sectionWidth = canvas.width / 4;
+  const sectionHeight = canvas.height / 2;
+  for (let row = 0; row < 2; row++) {
+    for (let col = 0; col < 4; col++) {
+      sections.push({x: col*sectionWidth, y: row*sectionHeight, w: sectionWidth, h: sectionHeight});
+    }
+  }
+  shuffle(sections); // Random order for mystery effect
+}
+
+function revealSection() {
+  if (sections.length === 0) return;
+  const sec = sections.pop();
+  ctx.drawImage(img, sec.x, sec.y, sec.w, sec.h, sec.x, sec.y, sec.w, sec.h);
+}
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+function goBackToStart() {
+  document.getElementById("typing-screen").style.display = "none";
+  document.getElementById("username-screen").style.display = "block";
+  document.getElementById("username-input").value = "";
+  document.getElementById("type-input").value = "";
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  currentImgIndex = 0;
+}
+</script>
