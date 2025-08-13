@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mystery Picture Typing</title>
+<style>
+  body { font-family: "Comic Sans MS", cursive, sans-serif; text-align: center; background-color: #fffbf0; color: #333; }
+  h1 { font-size: 48px; color: #ff9900; }
+  #game-container { margin-top: 20px; }
+  canvas { border: 4px solid #333; background-color: white; display: block; margin: 0 auto; }
+  #username-screen, #typing-screen { display: none; }
+  input { padding: 15px; font-size: 32px; border: 3px solid #ffcc00; border-radius: 10px; text-align: center; width: 300px; }
+  button { padding: 15px 20px; font-size: 28px; background-color: #ffcc00; border: none; border-radius: 10px; cursor: pointer; margin: 10px; }
+  #progress { font-size: 28px; color: #ff6600; }
+</style>
+</head>
+<body>
+
+<h1>🎨 Mystery Picture Typing!</h1>
+
+<div id="username-screen">
+  <h2>Type Your Name:</h2>
+  <input type="text" id="username-input" placeholder="Your name here">
+  <br><br>
+  <button onclick="setUsername()">Start Game</button>
+</div>
+
+<div id="typing-screen">
+  <h2>Type your name to reveal the picture!</h2>
+  <div id="game-container">
+    <canvas id="busCanvas"></canvas>
+    <div>
+      <input type="text" id="type-input" placeholder="Type here">
+    </div>
+    <p id="progress"></p>
+    <button onclick="goBackToStart()">Go Back to Start</button>
+  </div>
+</div>
+
+<script>
+let username = "";
+let imgFiles = [
+  "bus.png",
+  "pic1.png",
+  "pic2.png",
+  "pic4.png",
+  "pic5.png",
+  "pic6.png",
+  "pic7.png",
+  "pic8.png",
+  "pic9.png",
+  "pic10.png"
+];
+let currentImgIndex = 0;
+let img = new Image();
+let tileCoords = [];
+let totalTiles = 0;
+let tilesPerStep = 0;
+const tileSize = 16;
+const canvas = document.getElementById("busCanvas");
+const ctx = canvas.getContext("2d");
+
+document.getElementById("username-screen").style.display = "block";
+
+function loadImage(index) {
+  img.src = imgFiles[index];
+  img.onload = function() {
+    canvas.width = img.width;
+    canvas.height = img.height;
+    setupTiles();
+    document.getElementById("progress").textContent = `Progress: 0%`;
+    document.getElementById("type-input").disabled = false;
+  };
+  img.onerror = function() {
+    console.error("Failed to load image:", imgFiles[index]);
+  };
+}
+
+function setUsername() {
+  const nameInput = document.getElementById("username-input").value.trim();
+  if (!nameInput) return;
+  username = nameInput;
+  document.getElementById("username-screen").style.display = "none";
+  document.getElementById("typing-screen").style.display = "block";
+  document.getElementById("type-input").value = "";
+  document.getElementById("type-input").disabled = true;
+  currentImgIndex = 0;
+  loadImage(currentImgIndex);
+}
+
+document.getElementById("type-input").addEventListener("input", function() {
+  const typed = document.getElementById("type-input").value.trim();
+  if (typed === username && tileCoords.length > 0) {
+    revealTiles(tilesPerStep);
+
+    let percent = Math.floor(((totalTiles - tileCoords.length) / totalTiles) * 100);
+    document.getElementById("progress").textContent = `Progress: ${percent}%`;
+    document.getElementById("type-input").value = "";
+
+    if (tileCoords.length === 0) {
+      if (currentImgIndex < imgFiles.length - 1) {
+        document.getElementById("progress").textContent = "✅ Next Picture!";
+        setTimeout(() => {
+          currentImgIndex++;
+          loadImage(currentImgIndex);
+        }, 1000); // 1 second pause before loading next
+      } else {
+        document.getElementById("progress").textContent = "🎉 You revealed all pictures!";
+      }
+    }
+  }
+});
+
+function setupTiles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  tileCoords = [];
+  for (let y = 0; y < img.height; y += tileSize) {
+    for (let x = 0; x < img.width; x += tileSize) {
+      tileCoords.push({x, y});
+    }
+  }
+  totalTiles = tileCoords.length;
+  tilesPerStep = Math.ceil(totalTiles / 8); // exactly 8 steps
+  shuffle(tileCoords);
+}
+
+function revealTiles(count) {
+  for (let i = 0; i < count && tileCoords.length > 0; i++) {
+    let tile = tileCoords.pop();
+    ctx.drawImage(img, tile.x, tile.y, tileSize, tileSize, tile.x, tile.y, tileSize, tileSize);
+  }
+}
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+function goBackToStart() {
+  document.getElementById("typing-screen").style.display = "none";
+  document.getElementById("username-screen").style.display = "block";
+  document.getElementById("username-input").value = "";
+  document.getElementById("type-input").value = "";
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  currentImgIndex = 0;
+}
+</script>
+
+</body>
+</html>
